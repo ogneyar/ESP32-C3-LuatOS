@@ -5,8 +5,10 @@ TFT_eSPI tft = TFT_eSPI();
 char buf[32] = {0};
 unsigned long lastMs = 0;
 long check1s = 0;
+TFT_eSprite drawBuf(&tft);
 
 void setup() {
+  disableCore0WDT();
   Serial.begin(115200);
   Serial.println("Hello ESP32C3!!");
   initTFT();
@@ -18,6 +20,7 @@ void setup() {
   tft.println(buf);
   configTime(TZ_SEC, DST_SEC, "ntp.ntsc.ac.cn", "ntp1.aliyun.com");
   delay(2000);
+  drawBuf.createSprite(TFT_HEIGHT, TFT_WIDTH);
   setupOTAConfig();
   tft.fillScreen(TFT_BLACK);
 }
@@ -26,14 +29,17 @@ inline void showCurrentTime() {
   struct tm info;
   getLocalTime(&info);
   strftime(buf, 32, "%T", &info);
-  tft.fillScreen(TFT_BLACK);
-  tft.setTextColor(TFT_CYAN);
-  tft.drawCentreString(buf, 80, 10, 4);
+  drawBuf.fillRect(0, 0, TFT_HEIGHT, TFT_WIDTH, TFT_BLACK);
+  drawBuf.setTextColor(TFT_CYAN);
+  drawBuf.setFreeFont(&FreeSerifBold18pt7b);
+  drawBuf.drawCentreString(buf, 80, 10, 1);
   strftime(buf, 32, "%F", &info);
-  tft.setTextColor(TFT_PINK);
+  drawBuf.setTextColor(TFT_GREEN);
   digitalWrite(PIN_LED1, HIGH);
-  tft.drawCentreString(buf, 80, 50, 2);
+  drawBuf.setFreeFont(&FreeSerifBold12pt7b);
+  drawBuf.drawCentreString(buf, 80, 50, 1);
   digitalWrite(PIN_LED1, LOW);
+  drawBuf.pushSprite(0, 0);
 }
 
 void loop() {

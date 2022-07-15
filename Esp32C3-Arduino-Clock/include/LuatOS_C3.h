@@ -14,29 +14,51 @@
 #define PIN_LED1 12
 #define PIN_LED2 13
 
+// 4,5,8,9,13
+#define KEY_LEFT 9
+#define KEY_RIGHT 13
+#define KEY_UP 8
+#define KEY_DOWN 5
+#define KEY_CENTER 4
+
+uint8_t PIN_KEYS[] = {KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN, KEY_CENTER};
 extern TFT_eSPI tft;
 extern char buf[];
+
+void inline initKeys() {
+  for (int i = 0; i < sizeof(PIN_KEYS); i++) {
+    pinMode(PIN_KEYS[i], INPUT_PULLUP);
+  }
+}
+
+void inline setLCDBrightness(int bri) { ledcWrite(0, bri); }
 
 void inline setupOTAConfig() {
   ArduinoOTA.onStart([] {
     tft.fillScreen(TFT_BLACK);
-    tft.setTextColor(TFT_WHITE, TFT_BLACK);
-    tft.drawCentreString("OTA Update", 80, 0, 2);
-    tft.drawRoundRect(30, 20, 100, 20, 3, TFT_ORANGE);
+    tft.setTextColor(TFT_PINK, TFT_BLACK);
+    tft.drawCentreString("OTA Update", 80, 10, 2);
+    tft.drawRoundRect(30, 40, 100, 10, 2, TFT_ORANGE);
   });
   ArduinoOTA.onProgress([](u32_t pro, u32_t total) {
     tft.setTextColor(TFT_SKYBLUE, TFT_BLACK);
     sprintf(buf, "%d / %d", pro, total);
-    tft.drawCentreString(buf, 80, 40, 2);
+    tft.drawCentreString(buf, 80, 60, 2);
     int pros = pro * 100 / total;
-    tft.fillRoundRect(30, 20, pros, 20, 3, TFT_ORANGE);
+    tft.fillRoundRect(30, 40, pros, 10, 2, TFT_ORANGE);
   });
   ArduinoOTA.onEnd([] {
     tft.fillScreen(TFT_BLACK);
-    tft.setTextColor(TFT_WHITE, TFT_BLACK);
-    tft.drawCentreString("Update Succeed!!", 80, 0, 2);
+    tft.setTextColor(TFT_GREEN, TFT_BLACK);
+    tft.drawCentreString("Update Succeed!!", 80, 20, 2);
     tft.setTextColor(TFT_SKYBLUE, TFT_BLACK);
-    tft.drawCentreString("Restarting...", 80, 20, 2);
+    tft.drawCentreString("Restarting...", 80, 40, 2);
+  });
+  ArduinoOTA.onError([](ota_error_t err) {
+    tft.fillScreen(TFT_BLACK);
+    tft.setTextColor(TFT_RED, TFT_BLACK);
+    sprintf(buf, "OTA Error [%d]!!", err);
+    tft.drawCentreString(buf, 80, 30, 2);
   });
   ArduinoOTA.begin();
 }
@@ -63,6 +85,10 @@ void inline initTFT() {
   tft.setRotation(3);
   tft.setTextFont(2);
   tft.fillScreen(TFT_BLACK);
+  pinMode(TFT_BL, OUTPUT);
+  ledcSetup(0, 1000, 10);
+  ledcAttachPin(TFT_BL, 0);
+  setLCDBrightness(100);
 }
 
 void inline initLEDs() {
